@@ -1,0 +1,7 @@
+; This is a configuration file for the mySQLLogin() function
+
+host 		=	'localhost'
+database 	=	''
+	
+username 	=	''
+password 	=	''

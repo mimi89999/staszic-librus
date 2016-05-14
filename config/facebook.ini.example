@@ -1,0 +1,7 @@
+; This is a configuration file for the facebook API
+
+app_id 		=	''
+app_secret 	=	''
+
+page_id		=	''
+page_token	=	''

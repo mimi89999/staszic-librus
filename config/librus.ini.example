@@ -1,0 +1,7 @@
+; This is a configuration file for the librusRipAnnouncements() function
+
+login_page 			=	'https://synergia.librus.pl/loguj'
+announcement_page 	=	'https://synergia.librus.pl/ogloszenia'
+
+login				=	''
+password			=	''
