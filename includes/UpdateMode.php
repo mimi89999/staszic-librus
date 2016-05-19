@@ -52,7 +52,7 @@ function updateMode()
 				{
 					$in_database -> unpublish( $mysql_connection, $facebook_handle );
 					
-					$in_librus -> date_modified = date( 'Y-m-d G:i' );
+					$in_librus -> date_modified = date( 'Y-m-d H:i' );
 					$last_update = $in_librus -> date_modified;
 					
 					$in_librus -> publish( $mysql_connection, $facebook_handle );
@@ -88,8 +88,8 @@ function updateMode()
 		
 	$linkData = [
 		'about' => 
-			'Ostatnia aktualizacja: ' . $last_update . "\r\n" . 
-			'Ostatnie odświeżenie: ' . date( 'Y-m-d G:i' ) . "\r\n",
+			'Ostatnia aktualizacja: ' . date( 'Y-m-d H:i' ) . "\r\n" .
+			'Ostatnia zmiana: ' . $last_update . "\r\n" ,
 	];
 	$facebook_handle -> post( "/me", $linkData );
 		
