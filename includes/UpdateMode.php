@@ -20,6 +20,15 @@ function updateMode()
 	$html = downloadLibrusAnnouncementPage();
 	
 	$librus_data = ripLibrusAnnouncementsFromSource( $html );
+	
+	if( strpos( $html, 'Ogłoszenia - Tablica ogłoszeń' ) === false || count( $librus_data ) == 0 )
+	{
+		errorLog( 'Error loading announements!' );
+		unset( $facebook_handle );
+		unset( $mysql_connection );
+		return;
+	}
+	
 	$database_data = databaseFetchAnnouncements( $mysql_connection );
 	$last_update = null;
 	
