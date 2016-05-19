@@ -1,6 +1,6 @@
 <?php
 
-function downloadLibrus()
+function downloadLibrusAnnouncementPage()
 {
 	$librus_ini = parse_ini_file( 'config/librus.ini' );
 	
