@@ -23,7 +23,7 @@ function updateMode()
 	
 	if( strpos( $html, 'Ogłoszenia - Tablica ogłoszeń' ) === false || count( $librus_data ) == 0 )
 	{
-		errorLog( 'Error loading announements!' );
+		errorLog( 'Error loading announcements!' );
 		unset( $facebook_handle );
 		unset( $mysql_connection );
 		return;
