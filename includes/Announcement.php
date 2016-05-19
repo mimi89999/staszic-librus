@@ -17,7 +17,7 @@ class Announcement
 		"$this->title\r\n".
 		"Dodał: $this->author\r\n".
 		"Data publikacji: $this->date_posted\r\n".
-		"Ostatnia aktualizacja: $this->date_modified\r\n".
+		"Ostatnia zmiana: $this->date_modified\r\n".
 		"\r\n$this->contents";
 	}
 		
@@ -35,14 +35,14 @@ class Announcement
 			
 			$statement = $mysql_connection->prepare( "INSERT INTO librus_announcements( id, title, author, contents, contents_md5, date_posted, date_modified, fb_id ) VALUES( :id, :title, :author, :contents, :contents_md5, :date_posted, :date_modified, :fb_id )" );
 			$statement -> execute([
-				':id' 				=> $this -> id, 
-				':title'			=> $this -> title, 
-				':author' 			=> $this -> author,
+				':id' 			=> $this -> id, 
+				':title'		=> $this -> title, 
+				':author' 		=> $this -> author,
 				':contents' 		=> $this -> contents,
 				':contents_md5' 	=> $this -> contents_md5,
 				':date_posted' 		=> $this -> date_posted,
 				':date_modified' 	=> $this -> date_modified,
-				':fb_id' 			=> $this -> fb_id, 
+				':fb_id' 		=> $this -> fb_id, 
 			]);
 		}
 		
@@ -71,14 +71,14 @@ function databaseFetchAnnouncements( &$mysql_connection )
 	$i = 0;
 	while( $result = $statement->fetch(PDO::FETCH_ASSOC) )
 	{
-		$database_data[] 					= new Announcement();
-		$database_data[$i] -> id 			= $result['id'];
+		$database_data[] 			= new Announcement();
+		$database_data[$i] -> id 		= $result['id'];
 		$database_data[$i] -> title 		= $result['title'];
 		$database_data[$i] -> author 		= $result['author'];
 		$database_data[$i] -> contents 		= $result['contents'];
 		$database_data[$i] -> contents_md5 	= $result['contents_md5'];
 		$database_data[$i] -> date_posted 	= $result['date_posted'];
-		$database_data[$i] -> date_modified = $result['date_modified'];
+		$database_data[$i] -> date_modified 	= $result['date_modified'];
 		$database_data[$i] -> fb_id 		= $result['fb_id'];
 		$i++;
 	}
