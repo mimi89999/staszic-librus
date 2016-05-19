@@ -30,7 +30,7 @@ function updateMode()
 	}
 	
 	$database_data = databaseFetchAnnouncements( $mysql_connection );
-	$last_update = null;
+	last_update
 	
 	//Remove the announcements that no longer exist on Librus
 	foreach( $database_data as $in_database )
@@ -79,6 +79,7 @@ function updateMode()
 		}
 		if( $is_new == true )
 		{
+			$last_update = date( 'Y-m-d H:i' );
 			$in_librus -> publish( $mysql_connection, $facebook_handle );
 			debugLog( 'Added an announcement' );
 		}
