@@ -30,7 +30,7 @@ function updateMode()
 	}
 	
 	$database_data = databaseFetchAnnouncements( $mysql_connection );
-	last_update
+	$last_update = null;
 	
 	//Remove the announcements that no longer exist on Librus
 	foreach( $database_data as $in_database )
