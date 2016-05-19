@@ -8,6 +8,11 @@ require_once( 'includes/Announcement.php' );
 
 require_once( 'includes/Logging.php' );
 
+/*
+ * Updates the facebook page and database to match the announcement page on Librus.
+ * This should be done in regular time intervals.
+ *
+ */
 function updateMode()
 {
 	$facebook_handle = facebookLogin();

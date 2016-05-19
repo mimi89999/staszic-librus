@@ -1,7 +1,7 @@
 <?php
 
 /* 
- * Librus <-> Facebook announcement copier script
+ * Librus to Facebook announcement copying script
  * Copyright (c) 2016 Jakub Bartmiński
  *
  * (More info in the README.md file)

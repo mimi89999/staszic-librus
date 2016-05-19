@@ -7,6 +7,12 @@ require_once( 'includes/Announcement.php' );
 
 require_once( 'includes/Logging.php' );
 	
+	
+/*
+ * Removes all announvements from the facebook page and the database.
+ * !!! THIS IS IRREVERSIBLE !!!
+ *
+ */
 function resetMode()
 {
 	$facebook_handle = facebookLogin();
