@@ -2,7 +2,7 @@
 
 require_once( 'includes/MySQLLogin.php' );
 require_once( 'includes/FacebookLogin.php' );
-require_once( 'includes/DownloadLibrus.php' );
+require_once( 'includes/DownloadLibrusAnnouncementPage.php' );
 
 require_once( 'includes/Announcement.php' );
 
@@ -12,9 +12,9 @@ function updateMode()
 {
 	$facebook_handle = facebookLogin();
 	$mysql_connection = mySQLLogin();
-	$html = downloadLibrus();
+	$html = downloadLibrusAnnouncementPage();
 	
-	$librus_data = librusRipAnnouncements( $html );
+	$librus_data = ripLibrusAnnouncementsFromSource( $html );
 	$database_data = databaseFetchAnnouncements( $mysql_connection );
 	$last_update = null;
 	
