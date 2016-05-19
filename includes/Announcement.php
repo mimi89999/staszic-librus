@@ -87,7 +87,7 @@ function databaseFetchAnnouncements( &$mysql_connection )
 }
 
 /* !!! This function will be broken if site layout is changed !!! */
-function librusRipAnnouncements( $html )
+function librusRipAnnouncementsFromSource( $html )
 {
 	//Rip the relevant part of the announcement page, contained between <form></form> tags
 	$pos1 = strpos ( $html, '<form' );
