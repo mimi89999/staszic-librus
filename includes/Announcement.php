@@ -131,10 +131,10 @@ function ripLibrusAnnouncementsFromSource( $html )
 		$pos2 = strpos ( $html, '</td', $pos1 );
 		
 		$pos1 = strpos( $html, '<td', $pos1 );
-                if( $librus_data[$i] -> author == 'Agnieszka Potocka' )
-                    array_pop( $librus_data );
-                else
-		    $i++;
+		if( $librus_data[$i] -> author == ' Agnieszka Potocka' )
+			array_pop( $librus_data );
+		else
+			$i++;
 	}
 	
 	//The array is in reverse chronological order (most recent announcements first), so it has to be reversed
