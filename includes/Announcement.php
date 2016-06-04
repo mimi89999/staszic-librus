@@ -1,4 +1,5 @@
 <?php
+require_once( 'includes/logging.php' );
 
 class Announcement
 {
@@ -86,57 +87,173 @@ function databaseFetchAnnouncements( &$mysql_connection )
 	return $database_data;
 }
 
-/* !!! This function will be broken if site layout is changed !!! */
-function ripLibrusAnnouncementsFromSource( $html )
+function obtainLibrusToken( &$curl_handle )
 {
-	//Rip the relevant part of the announcement page, contained between <form></form> tags
-	$pos1 = strpos ( $html, '<form' );
-	$pos2 = strpos ( $html, '</form', $pos1 );
-	$html = substr( $html, $pos1, $pos2 - $pos1 + 7 );
-
-	//Rip the announcements from between the <td></td> tags into an array of Announcement objects
-	$librus_data = array();
-	$pos1 = strpos( $html, '<td' );
-	$i = 0;
-	while( $pos1 !== FALSE )
+	$librus_ini = parse_ini_file( 'config/librus.ini' );
+	
+	curl_setopt( $curl_handle, CURLOPT_URL, 'https://api.librus.pl/OAuth/Token' );
+	curl_setopt( $curl_handle, CURLOPT_POST, 1 );
+	$post_data = "username={$librus_ini['login']}&password={$librus_ini['password']}&grant_type=password";
+	$content_length = strlen( $post_data );
+	curl_setopt( 
+		$curl_handle, 
+		CURLOPT_POSTFIELDS, 
+		$post_data
+	);
+	curl_setopt( 
+		$curl_handle, 
+		CURLOPT_HTTPHEADER, 
+		array(
+			"Authorization: Basic {$librus_ini['default_token']}",
+			'Content-Type: application/x-www-form-urlencoded',
+			"Content-Length: {$content_length}",
+			'User-Agent: Dalvik/2.1.0 (Linux; U; Android 5.1.1; A0001 Build/LMY48B)',
+			'Host: api.librus.pl',
+			'Connection: Keep-Alive',
+			'Accept-Encoding: gzip',
+		)
+	);
+	
+	$json_raw = curl_exec( $curl_handle );
+	if( $json_raw === FALSE )
 	{
-		$librus_data[] = new Announcement();
+		errorLog( 'Error obtaining token! Curl error: ' . curl_error( $curl_handle ) );
+		return null;
+	}
+	
+	$response = json_decode( $json_raw );
+	if( isset( $response -> error ) )
+	{
+		errorLog( 'Error obtaining token! Librus API Error: ' . $response -> error );
+		return null;
+	}
+	
+	return [
+		'access_token' 	=> $response -> access_token,
+		'token_type'	=> $response -> token_type,
+	];
+}
+
+function downloadSchoolNotices( &$curl_handle, $librus_token )
+{
+	curl_setopt( $curl_handle, CURLOPT_URL, 'https://api.librus.pl/2.0/SchoolNotices' );
+	curl_setopt( $curl_handle, CURLOPT_POST, 0 );
+	
+	curl_setopt( 
+		$curl_handle, 
+		CURLOPT_HTTPHEADER, 
+		array(
+			"Authorization: {$librus_token[ 'token_type' ]} {$librus_token[ 'access_token' ]}",
+			'User-Agent: Dalvik/2.1.0 (Linux; U; Android 5.1.1; A0001 Build/LMY48B)',
+			'Host: api.librus.pl',
+			'Connection: Keep-Alive',
+			'Accept-Encoding: gzip',
+		)
+	);
+
+	$json_raw = curl_exec( $curl_handle );
+	if( $json_raw === FALSE )
+	{
+		errorLog( 'Error downloading announcements! Curl error: ' . curl_error( $curl_handle ) );
+		return null;
+	}
+	
+	$response = json_decode( $json_raw );
+	if( isset( $response -> error ) )
+	{
+		errorLog( 'Error downloading announcements! Librus API Error: ' . $response -> error );
+		return null;
+	}
+	
+	return $response;
+}
+
+function fillInTeacherNames( &$curl_handle, $librus_token, $notices_incomplete )
+{
+	$url = 'https://api.librus.pl/2.0/Users/';
+	curl_setopt( $curl_handle, CURLOPT_POST, 0 );
+	
+	curl_setopt( 
+		$curl_handle, 
+		CURLOPT_HTTPHEADER, 
+		array(
+			"Authorization: {$librus_token[ 'token_type' ]} {$librus_token[ 'access_token' ]}",
+			'User-Agent: Dalvik/2.1.0 (Linux; U; Android 5.1.1; A0001 Build/LMY48B)',
+			'Host: api.librus.pl',
+			'Connection: Keep-Alive',
+			'Accept-Encoding: gzip',
+		)
+	);
+	
+	foreach( $notices_incomplete -> SchoolNotices as $notice )
+		$url .= "{$notice -> AddedBy -> Id},";
+	curl_setopt( $curl_handle, CURLOPT_URL, $url );
+	
+	$json_raw = curl_exec( $curl_handle );
+	if( $json_raw === FALSE )
+	{
+		errorLog( 'Error downloading teacher list! Curl error: ' . curl_error( $curl_handle ) );
+		return null;
+	}
+	
+	$response = json_decode( $json_raw );
+	if( isset( $response -> error ) )
+	{
+		errorLog( 'Error downloading teacher list! Librus API Error: ' . $response -> error );
+		return null;
+	}
 		
-		$pos1 = strpos ( $html, '<td', $pos1 );
-		$pos1 = strpos ( $html, '>', $pos1 ) + 1;
-		$pos2 = strpos ( $html, '</td', $pos1 );
-		$librus_data[$i] -> title = html_entity_decode( strip_tags( substr( $html, $pos1, $pos2 - $pos1 ) ) );
+	$users = array();
+	foreach( $response -> Users as $user )
+		$users[ $user -> Id ] = "{$user -> FirstName} {$user -> LastName}";
+	foreach( $notices_incomplete -> SchoolNotices as $notice )
+		$notice -> AddedBy -> Name = $users[ $notice -> AddedBy -> Id ];
+	
+	return $notices_incomplete;
+}
 
-		$pos1 = strpos ( $html, '<td', $pos1 );
-		$pos1 = strpos ( $html, '>', $pos1 ) + 1;
-		$pos2 = strpos ( $html, '</td', $pos1 );
-		$librus_data[$i] -> author = html_entity_decode( strip_tags( substr( $html, $pos1, $pos2 - $pos1 ) ) );
+function librusFetchAnnouncements()
+{
+	
+	$curl_handle = curl_init();
+
+	//These Aren't the Droids You're Looking For
+	curl_setopt( $curl_handle, CURLOPT_SSL_VERIFYHOST, 0 );
+	curl_setopt( $curl_handle, CURLOPT_SSL_VERIFYPEER, 0 );
+
+	curl_setopt( $curl_handle, CURLOPT_FOLLOWLOCATION, 0 );
+	curl_setopt( $curl_handle, CURLOPT_RETURNTRANSFER, 1 );
+	
+	$librus_token = obtainLibrusToken( $curl_handle );
+	if( $librus_token == null )
+		return null;
+	$notices_incomplete = downloadSchoolNotices( $curl_handle, $librus_token );
+	if( $notices_incomplete == null )
+		return null;
+	$notices = fillInTeacherNames( $curl_handle, $librus_token, $notices_incomplete );
+	if( $notices == null )
+		return null;
+	
+	$announcements = array();
+	foreach( $notices -> SchoolNotices as $notice )
+	{
+		static $i = 0;
 		
-		$librus_data[$i] -> id = hash( "md5", $librus_data[$i]->title . $librus_data[$i]->author );
-
-		$pos1 = strpos ( $html, '<td', $pos1 );
-		$pos1 = strpos ( $html, '>', $pos1 ) + 1;
-		$pos2 = strpos ( $html, '</td', $pos1 );
-		$librus_data[$i] -> date_posted = substr( $html, $pos1, $pos2 - $pos1 );
-		$librus_data[$i] -> date_modified = '-';
-
-		$pos1 = strpos ( $html, '<td', $pos1 );
-		$pos1 = strpos ( $html, '>', $pos1 ) + 1;
-		$pos2 = strpos ( $html, '</td', $pos1 );
-		$librus_data[$i] -> contents = html_entity_decode( strip_tags( substr( $html, $pos1, $pos2 - $pos1 ) ) );
-		$librus_data[$i] -> contents_md5 = hash( "md5", $librus_data[$i]->contents );
-
-		$pos1 = strpos ( $html, '<td', $pos1 );
-		$pos1 = strpos ( $html, '>', $pos1 ) + 1;
-		$pos2 = strpos ( $html, '</td', $pos1 );
+		$announcements[] = new Announcement();
+		$announcements[$i] -> title = html_entity_decode( $notice -> Subject );
+		$announcements[$i] -> id = $notice -> Id;
+		$announcements[$i] -> date_posted = $notice -> StartDate;
+		$announcements[$i] -> date_modified = '-';
+		$announcements[$i] -> contents = html_entity_decode( $notice -> Content );
+		$announcements[$i] -> contents_md5 = hash( "md5", $announcements[$i]->contents );
+		$announcements[$i] -> author = $notice -> AddedBy -> Name;
 		
-		$pos1 = strpos( $html, '<td', $pos1 );
-		if( $librus_data[$i] -> author == ' Agnieszka Potocka' )
-			array_pop( $librus_data );
+		if( $announcements[$i] -> author == 'Agnieszka Potocka' || $announcements[$i] -> author == 'Dorota Nosowska' )
+			array_pop( $announcements );
 		else
 			$i++;
 	}
 	
-	//The array is in reverse chronological order (most recent announcements first), so it has to be reversed
-	return array_reverse( $librus_data );
+	curl_close( $curl_handle );
+	return $announcements;
 }

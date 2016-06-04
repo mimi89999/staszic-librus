@@ -2,7 +2,6 @@
 
 require_once( 'includes/MySQLLogin.php' );
 require_once( 'includes/FacebookLogin.php' );
-require_once( 'includes/DownloadLibrusAnnouncementPage.php' );
 
 require_once( 'includes/Announcement.php' );
 
@@ -17,11 +16,10 @@ function updateMode()
 {
 	$facebook_handle = facebookLogin();
 	$mysql_connection = mySQLLogin();
-	$html = downloadLibrusAnnouncementPage();
 	
-	$librus_data = ripLibrusAnnouncementsFromSource( $html );
+	$librus_data = librusFetchAnnouncements();
 	
-	if( strpos( $html, 'Ogłoszenia - Tablica ogłoszeń' ) === false || count( $librus_data ) == 0 )
+	if( $librus_data == null || count( $librus_data ) == 0 )
 	{
 		errorLog( 'Error loading announcements!' );
 		unset( $facebook_handle );

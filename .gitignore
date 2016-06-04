@@ -6,3 +6,6 @@ config/mySQL.ini
 #logs
 logs/debug.log
 logs/error.log
+
+#testing file
+test.php

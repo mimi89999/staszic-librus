@@ -1,15 +1,14 @@
 # staszic-librus
+## Version 2
 
-This script copies announcements from the announcement page on Librus (synergia.librus.com) into a page's feed on Facebook.
+This script copies announcements from Librus Synergia into a page's feed on Facebook.
 
 
 
 Here's how it works: <br />
-1. Log into the Librus site.<br />
-2. Download the announcement page.<br />
-3. Process the page and rip relevant data (+compare with existing data).<br />
-4. Store the data in a MySQL database.<br />
-5. Use a page token to publish the data on Facebook.<br />
+1. Download the announcements using the Librus API.<br />
+2. Store the data in a MySQL database (Compare with existing data).<br />
+3. Use a page token to keep a Facebook page synchronized with the data in the database.<br />
 It is supposed to be set up to run in regular intervals, for example by scheduling a cron job.
 
 
