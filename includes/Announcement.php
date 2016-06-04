@@ -24,6 +24,7 @@ class Announcement
 		
 	public function publish( &$mysql_connection, &$facebook_handle )
 	{	
+		$databases = parse_ini_file( 'config/databases.ini' );
 		$link_data = [
 			'message' 	=> mb_convert_encoding( $this, 'UTF-8' ),
 			'created_time' 	=> $this -> date_posted,
@@ -34,7 +35,7 @@ class Announcement
 		{
 			$this -> fb_id = $graph_node[ 'id' ];
 			
-			$statement = $mysql_connection->prepare( "INSERT INTO librus_announcements( id, title, author, contents, contents_md5, date_posted, date_modified, fb_id ) VALUES( :id, :title, :author, :contents, :contents_md5, :date_posted, :date_modified, :fb_id )" );
+			$statement = $mysql_connection -> prepare( "INSERT INTO {$databases['announcements_table']}( id, title, author, contents, contents_md5, date_posted, date_modified, fb_id ) VALUES( :id, :title, :author, :contents, :contents_md5, :date_posted, :date_modified, :fb_id )" );
 			$statement -> execute([
 				':id' 				=> $this -> id, 
 				':title'			=> $this -> title, 
@@ -51,13 +52,14 @@ class Announcement
 	
 	public function unpublish( &$mysql_connection, &$facebook_handle )
 	{
+		$databases = parse_ini_file( 'config/databases.ini' );
 		$link_data = array();
 		$response = $facebook_handle -> delete( "/{$this->fb_id}", $link_data );
 		$graph_node = $response -> getGraphNode();
 		
 		if( array_key_exists( 'success', $graph_node -> asArray() )  )
 		{
-			$statement = $mysql_connection -> prepare( "DELETE FROM librus_announcements WHERE fb_id = '{$this->fb_id}'" );
+			$statement = $mysql_connection -> prepare( "DELETE FROM {$databases['announcements_table']} WHERE fb_id = '{$this->fb_id}'" );
 			$statement -> execute();
 		}
 	}
@@ -65,9 +67,10 @@ class Announcement
 	
 function databaseFetchAnnouncements( &$mysql_connection )
 {
+	$databases = parse_ini_file( 'config/databases.ini' );
 	$database_data = array();
 
-	$statement = $mysql_connection -> prepare( "SELECT * FROM librus_announcements" );
+	$statement = $mysql_connection -> prepare( "SELECT * FROM {$databases['announcements_table']}" );
 	$statement -> execute();
 	$i = 0;
 	while( $result = $statement->fetch(PDO::FETCH_ASSOC) )

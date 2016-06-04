@@ -2,6 +2,7 @@
 config/facebook.ini
 config/librus.ini
 config/mySQL.ini
+config/databases.ini
 
 #logs
 logs/debug.log

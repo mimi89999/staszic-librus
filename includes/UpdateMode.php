@@ -16,6 +16,7 @@ function updateMode()
 {
 	$facebook_handle = facebookLogin();
 	$mysql_connection = mySQLLogin();
+	$databases = parse_ini_file( 'config/databases.ini' );
 	
 	$librus_data = librusFetchAnnouncements();
 	
@@ -86,16 +87,16 @@ function updateMode()
 	//Update facebook description
 	if( is_null( $last_update ) )
 	{
-		$statement = $mysql_connection -> prepare( "SELECT * FROM last_update" );
+		$statement = $mysql_connection -> prepare( "SELECT * FROM {$databases['last_update_table']}" );
 		$statement -> execute();
 		while( $result = $statement -> fetch( PDO::FETCH_ASSOC ) )
 			$last_update = $result[ 'time' ];
 	}
 	else
 	{
-		$statement = $mysql_connection -> prepare( 'TRUNCATE last_update' );
+		$statement = $mysql_connection -> prepare( "TRUNCATE {$databases['last_update_table']}" );
 		$statement -> execute();
-		$statement = $mysql_connection -> prepare( 'INSERT INTO last_update( time ) VALUES( :last_update )' );
+		$statement = $mysql_connection -> prepare( "INSERT INTO {$databases['last_update_table']}( time ) VALUES( :last_update )" );
 		$statement -> execute([ ':last_update' => $last_update ]);
 	}
 		

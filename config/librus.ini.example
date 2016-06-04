@@ -1,4 +1,4 @@
-; This is a configuration file for the librusRipAnnouncements() function
+; This is a configuration file for the librusFetchAnnouncements() function
 
 ; default_user_id is "14"
 ; default_user_secret is "3dd86ca34196d54211092eb94651dca7"
