@@ -1,0 +1,24 @@
+; This is a configuration file for the database names
+;
+; The database should have 2 tables: first one storing the announcements, second one storing the last update timestamp.
+; The tables should be structured according to the comments below
+
+
+announcements_table = 'table1'
+;	8 columns
+;	#  Name           Type       
+;	1. id             VARCHAR(32)
+;	2. title          TEXT       
+;	3. author         TEXT       
+;	4. contents       TEXT       
+;	5. contents_md5   VARCHAR(32)
+;	6. date_posted    VARCHAR(16)
+;	7. date_modified  VARCHAR(16)
+;	8. fb_id          TEXT       
+
+
+
+last_update_table 	= 'table2'
+;	1 column
+;	#  Name           Type       
+;	1. time           VARCHAR(16)

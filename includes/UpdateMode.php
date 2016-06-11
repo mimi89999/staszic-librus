@@ -2,7 +2,6 @@
 
 require_once( 'includes/MySQLLogin.php' );
 require_once( 'includes/FacebookLogin.php' );
-require_once( 'includes/DownloadLibrusAnnouncementPage.php' );
 
 require_once( 'includes/Announcement.php' );
 
@@ -17,11 +16,11 @@ function updateMode()
 {
 	$facebook_handle = facebookLogin();
 	$mysql_connection = mySQLLogin();
-	$html = downloadLibrusAnnouncementPage();
+	$databases = parse_ini_file( 'config/databases.ini' );
 	
-	$librus_data = ripLibrusAnnouncementsFromSource( $html );
+	$librus_data = librusFetchAnnouncements();
 	
-	if( strpos( $html, 'Ogłoszenia - Tablica ogłoszeń' ) === false || count( $librus_data ) == 0 )
+	if( $librus_data == null || count( $librus_data ) == 0 )
 	{
 		errorLog( 'Error loading announcements!' );
 		unset( $facebook_handle );
@@ -88,16 +87,16 @@ function updateMode()
 	//Update facebook description
 	if( is_null( $last_update ) )
 	{
-		$statement = $mysql_connection -> prepare( "SELECT * FROM last_update" );
+		$statement = $mysql_connection -> prepare( "SELECT * FROM {$databases['last_update_table']}" );
 		$statement -> execute();
 		while( $result = $statement -> fetch( PDO::FETCH_ASSOC ) )
 			$last_update = $result[ 'time' ];
 	}
 	else
 	{
-		$statement = $mysql_connection -> prepare( 'TRUNCATE last_update' );
+		$statement = $mysql_connection -> prepare( "TRUNCATE {$databases['last_update_table']}" );
 		$statement -> execute();
-		$statement = $mysql_connection -> prepare( 'INSERT INTO last_update( time ) VALUES( :last_update )' );
+		$statement = $mysql_connection -> prepare( "INSERT INTO {$databases['last_update_table']}( time ) VALUES( :last_update )" );
 		$statement -> execute([ ':last_update' => $last_update ]);
 	}
 		
