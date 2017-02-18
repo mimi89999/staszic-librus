@@ -17,8 +17,13 @@ announcements_table = 'table1'
 ;	8. fb_id          TEXT       
 
 
-
 last_update_table 	= 'table2'
 ;	1 column
 ;	#  Name           Type       
 ;	1. time           VARCHAR(16)
+
+
+blacklist_table 	= 'table3'
+;	1 column
+;	#  Name			  Type
+;	1. teacher		  TEXT

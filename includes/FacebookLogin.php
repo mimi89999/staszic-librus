@@ -1,10 +1,10 @@
 <?php
 
-require_once( "includes/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php" );
+require_once( dirname(__FILE__) . "/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php" );
 
 function facebookLogin()
 {
-	$facebook_ini = parse_ini_file( 'config/facebook.ini' );
+	$facebook_ini = parse_ini_file( dirname(__FILE__) . '/../config/facebook.ini' );
 
 	$facebook_handle = new Facebook\Facebook([
 		'app_id' 				=> $facebook_ini[ 'app_id' ],

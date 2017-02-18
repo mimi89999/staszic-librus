@@ -2,7 +2,7 @@
 
 function mySQLLogin()
 {
-	$mySQL_ini = parse_ini_file( 'config/mySQL.ini' );
+	$mySQL_ini = parse_ini_file( dirname(__FILE__) . '/../config/mySQL.ini' );
 
 	$mysql_connection = new PDO(
 		"mysql:host={$mySQL_ini['host']}; dbname={$mySQL_ini['database']}; charset=utf8",

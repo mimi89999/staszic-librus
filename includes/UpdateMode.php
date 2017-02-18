@@ -1,11 +1,11 @@
 <?php
 
-require_once( 'includes/MySQLLogin.php' );
-require_once( 'includes/FacebookLogin.php' );
+require_once( dirname(__FILE__) . '/MySQLLogin.php' );
+require_once( dirname(__FILE__) . '/FacebookLogin.php' );
 
-require_once( 'includes/Announcement.php' );
+require_once( dirname(__FILE__) . '/Announcement.php' );
 
-require_once( 'includes/Logging.php' );
+require_once( dirname(__FILE__) . '/Logging.php' );
 
 /*
  * Updates the facebook page and database to match the announcement page on Librus.
@@ -16,13 +16,18 @@ function updateMode()
 {
 	$facebook_handle = facebookLogin();
 	$mysql_connection = mySQLLogin();
-	$databases = parse_ini_file( 'config/databases.ini' );
+	$databases = parse_ini_file( dirname(__FILE__) . '/../config/databases.ini' );
 	
-	$librus_data = librusFetchAnnouncements();
+	$teacher_blacklist = Array();
+	$statement = $mysql_connection -> prepare( "SELECT * FROM {$databases['blacklist_table']}" );
+	$statement -> execute();
+	while( $result = $statement -> fetch( PDO::FETCH_ASSOC ) )
+		$teacher_blacklist[] = $result[ 'teacher' ];
+	$librus_data = librusFetchAnnouncements( $teacher_blacklist );
 	
 	if( $librus_data == null || count( $librus_data ) == 0 )
 	{
-		errorLog( 'Error loading announcements!' );
+		errorLog( 'Error - couldn\'t load announcements!' );
 		unset( $facebook_handle );
 		unset( $mysql_connection );
 		return;
@@ -47,8 +52,15 @@ function updateMode()
 		
 		if( $was_deleted )
 		{
-			$in_database -> unpublish( $mysql_connection, $facebook_handle );
-			debugLog( 'Removed an announcement' );
+			try
+			{
+				$in_database -> unpublish( $mysql_connection, $facebook_handle );
+				debugLog( 'Removed an announcement' );
+			}
+			catch( Facebook\Exceptions\FacebookResponseException $e ) 
+			{ 
+				errorLog( 'Announcement removal: Graph returned an error: ' . $e->getMessage() ); 
+			}
 		}
 	}
 	
@@ -63,13 +75,27 @@ function updateMode()
 			{
 				if( $in_librus ->contents_md5 != $in_database->contents_md5 )
 				{
-					$in_database -> unpublish( $mysql_connection, $facebook_handle );
+					try
+					{
+						$in_database -> unpublish( $mysql_connection, $facebook_handle );
+						$in_librus -> date_modified = date( 'Y-m-d H:i' );
+						$last_update = $in_librus -> date_modified;
+						
+						try
+						{
+							$in_librus -> publish( $mysql_connection, $facebook_handle );
+							debugLog( 'Modified an announcement' );
+						}
+						catch( Facebook\Exceptions\FacebookResponseException $e ) 
+						{ 
+							errorLog( 'Announcement modification (publishing): Graph returned an error: ' . $e->getMessage() );
+						}
+					}
+					catch( Facebook\Exceptions\FacebookResponseException $e ) 
+					{ 
+						errorLog( 'Announcement modification (unpublishing): Graph returned an error: ' . $e->getMessage() );
+					}
 					
-					$in_librus -> date_modified = date( 'Y-m-d H:i' );
-					$last_update = $in_librus -> date_modified;
-					
-					$in_librus -> publish( $mysql_connection, $facebook_handle );
-					debugLog( 'Modified an announcement' );
 				}
 				
 				$is_new = false;
@@ -78,9 +104,16 @@ function updateMode()
 		}
 		if( $is_new == true )
 		{
-			$last_update = date( 'Y-m-d H:i' );
-			$in_librus -> publish( $mysql_connection, $facebook_handle );
-			debugLog( 'Added an announcement' );
+			try
+			{
+				$in_librus -> publish( $mysql_connection, $facebook_handle );
+				$last_update = date( 'Y-m-d H:i' );
+				debugLog( 'Added an announcement' );
+			}
+			catch( Facebook\Exceptions\FacebookResponseException $e ) 
+			{ 
+				errorLog( 'Announcement publication: Graph returned an error: ' . $e->getMessage() );
+			}
 		}
 	}
 	

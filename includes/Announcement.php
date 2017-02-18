@@ -1,5 +1,5 @@
 <?php
-require_once( 'includes/logging.php' );
+require_once( dirname(__FILE__) . '/Logging.php' );
 
 class Announcement
 {
@@ -24,7 +24,7 @@ class Announcement
 		
 	public function publish( &$mysql_connection, &$facebook_handle )
 	{	
-		$databases = parse_ini_file( 'config/databases.ini' );
+		$databases = parse_ini_file( dirname(__FILE__) . '/../config/databases.ini' );
 		$link_data = [
 			'message' 	=> mb_convert_encoding( $this, 'UTF-8' ),
 			'created_time' 	=> $this -> date_posted,
@@ -54,10 +54,26 @@ class Announcement
 	{
 		$databases = parse_ini_file( 'config/databases.ini' );
 		$link_data = array();
-		$response = $facebook_handle -> delete( "/{$this->fb_id}", $link_data );
-		$graph_node = $response -> getGraphNode();
-		
-		if( array_key_exists( 'success', $graph_node -> asArray() )  )
+		$response = false;
+		$graph_node = false;
+		try
+		{
+			$response = $facebook_handle -> delete( "/{$this->fb_id}", $link_data );
+			$graph_node = $response -> getGraphNode();
+		}
+		catch( Facebook\Exceptions\FacebookResponseException $e ) 
+		{
+			if( $e->getMessage() == '(#100) This post could not be loaded' )
+			{
+				errorLog( 'Announcement publication: Graph returned an error: ' . $e->getMessage() . '. Removing leftover database entry.' );
+				$statement = $mysql_connection -> prepare( "DELETE FROM {$databases['announcements_table']} WHERE fb_id = '{$this->fb_id}'" );
+				$statement -> execute();
+			}
+			else
+				errorLog( 'Announcement unpublication: Graph returned an error: ' . $e->getMessage() );
+		}
+
+		if( $graph_node != false && array_key_exists( 'success', $graph_node -> asArray() )  )
 		{
 			$statement = $mysql_connection -> prepare( "DELETE FROM {$databases['announcements_table']} WHERE fb_id = '{$this->fb_id}'" );
 			$statement -> execute();
@@ -96,7 +112,7 @@ function obtainLibrusToken( &$curl_handle )
 	
 	curl_setopt( $curl_handle, CURLOPT_URL, 'https://api.librus.pl/OAuth/Token' );
 	curl_setopt( $curl_handle, CURLOPT_POST, 1 );
-	$post_data = "username={$librus_ini['login']}&password={$librus_ini['password']}&grant_type=password";
+	$post_data = "grant_type=password&username={$librus_ini['login']}&password={$librus_ini['password']}&librus_rules_accepted=true&librus_mobile_rules_accepted=true";
 	$content_length = strlen( $post_data );
 	curl_setopt( 
 		$curl_handle, 
@@ -215,9 +231,8 @@ function fillInTeacherNames( &$curl_handle, $librus_token, $notices_incomplete )
 	return $notices_incomplete;
 }
 
-function librusFetchAnnouncements()
+function librusFetchAnnouncements( $teacher_blacklist )
 {
-	
 	$curl_handle = curl_init();
 
 	//These Aren't the Droids You're Looking For
@@ -251,9 +266,17 @@ function librusFetchAnnouncements()
 		$announcements[$i] -> contents_md5 = hash( "md5", $announcements[$i]->contents );
 		$announcements[$i] -> author = $notice -> AddedBy -> Name;
 		
-		if( $announcements[$i] -> author == 'Agnieszka Potocka' || $announcements[$i] -> author == 'Dorota Nosowska' )
-			array_pop( $announcements );
-		else
+		$ignored = false;
+		foreach( $teacher_blacklist as $blacklisted_teacher )
+		{
+			if( $announcements[$i] -> author == $blacklisted_teacher )
+			{
+				array_pop( $announcements );
+				$ignored = true;
+				break;
+			}
+		}
+		if( $ignored == false )
 			$i++;
 	}
 	

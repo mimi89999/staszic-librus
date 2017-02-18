@@ -1,11 +1,11 @@
 <?php
 
-require_once( 'includes/MySQLLogin.php' );
-require_once( 'includes/FacebookLogin.php' );
+require_once( dirname(__FILE__) . '/MySQLLogin.php' );
+require_once( dirname(__FILE__) . '/FacebookLogin.php' );
 
-require_once( 'includes/Announcement.php' );
+require_once( dirname(__FILE__) . '/Announcement.php' );
 
-require_once( 'includes/Logging.php' );
+require_once( dirname(__FILE__) . '/Logging.php' );
 	
 	
 /*

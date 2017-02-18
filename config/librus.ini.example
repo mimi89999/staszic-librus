@@ -1,9 +1,10 @@
 ; This is a configuration file for the librusFetchAnnouncements() function
 
-; default_user_id is "14"
-; default_user_secret is "3dd86ca34196d54211092eb94651dca7"
+; New data as of 14.10.2016:
+; default_user_id is "35"
+; default_user_secret is "636ab418ccbe882b19a33f577e94cb4f"
 ; default token shall be "default_user_id:default_user_secret" encoded in base64
-default_token		=	'MTQ6M2RkODZjYTM0MTk2ZDU0MjExMDkyZWI5NDY1MWRjYTc='
+default_token		=	'MzU6NjM2YWI0MThjY2JlODgyYjE5YTMzZjU3N2U5NGNiNGY='
 
 login				=	''
 password			=	''

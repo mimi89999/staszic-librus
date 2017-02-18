@@ -9,32 +9,18 @@
  *
  */
 	
-require_once( 'includes/UpdateMode.php' );
-require_once( 'includes/ResetMode.php' );
-require_once( "includes/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php" );
+require_once( dirname(__FILE__) . '/includes/UpdateMode.php' );
+require_once( dirname(__FILE__) . '/includes/ResetMode.php' );
+require_once( dirname(__FILE__) . '/includes/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php' );
 
 ini_set( 'max_execution_time', 300 );
+ini_set( 'display_errors', 1 );
 mb_internal_encoding( 'UTF-8' );
 date_default_timezone_set( 'Europe/Warsaw' );
 
-try 
-{
-	if( isset( $_GET['reset'] ) || ( isset( $argv ) && count( $argv ) > 1 && $argv[1] == '--reset' ) )
-		resetMode();
-	else
-		updateMode();
-}
-catch( Facebook\Exceptions\FacebookResponseException $e ) 
-{ 
-	errorLog( 'Graph returned an error: ' . $e->getMessage() ); 
-}
-catch( Facebook\Exceptions\FacebookSDKException $e ) 
-{
-	errorLog( 'Facebook SDK returned an error: ' . $e->getMessage() ); 
-}
-catch ( PDOException $error )
-{
-	errorLog( $error->getMessage() ); 
-}
+if( isset( $_GET['reset'] ) || ( isset( $argv ) && count( $argv ) > 1 && $argv[1] == '--reset' ) )
+	resetMode();
+else
+	updateMode();
 
 echo 'Done!';
