@@ -70,7 +70,11 @@ class Announcement
 				$statement -> execute();
 			}
 			else
-				errorLog( 'Announcement unpublication: Graph returned an error: ' . $e->getMessage() );
+			{
+				errorLog( 'Announcement unpublication: Graph returned an error: ' . $e->getMessage() . '. Removing database entry.' );
+				$statement = $mysql_connection -> prepare( "DELETE FROM {$databases['announcements_table']} WHERE fb_id = '{$this->fb_id}'" );
+				$statement -> execute();
+			}		
 		}
 
 		if( $graph_node != false && array_key_exists( 'success', $graph_node -> asArray() )  )

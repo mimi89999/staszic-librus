@@ -7,7 +7,7 @@
 announcements_table = 'table1'
 ;	8 columns
 ;	#  Name           Type       
-;	1. id             VARCHAR(32)
+;	1. id             TEXT
 ;	2. title          TEXT       
 ;	3. author         TEXT       
 ;	4. contents       TEXT       
@@ -15,7 +15,7 @@ announcements_table = 'table1'
 ;	6. date_posted    VARCHAR(16)
 ;	7. date_modified  VARCHAR(16)
 ;	8. fb_id          TEXT       
-
+; !!! The 'id' column should now be TEXT instead of VARCHAR to accomodate possible future changes in the Librus API. !!!
 
 last_update_table 	= 'table2'
 ;	1 column

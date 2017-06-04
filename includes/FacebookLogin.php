@@ -1,6 +1,6 @@
 <?php
 
-require_once( dirname(__FILE__) . "/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php" );
+require_once( dirname(__FILE__) . "/php-graph-sdk/src/Facebook/autoload.php" );
 
 function facebookLogin()
 {

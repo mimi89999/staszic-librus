@@ -11,7 +11,7 @@
 	
 require_once( dirname(__FILE__) . '/includes/UpdateMode.php' );
 require_once( dirname(__FILE__) . '/includes/ResetMode.php' );
-require_once( dirname(__FILE__) . '/includes/facebook-php-sdk-v4-5.0.0/src/Facebook/autoload.php' );
+require_once( dirname(__FILE__) . '/includes/php-graph-sdk/src/Facebook/autoload.php' );
 
 ini_set( 'max_execution_time', 300 );
 ini_set( 'display_errors', 1 );
