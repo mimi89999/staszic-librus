@@ -113,47 +113,73 @@ function databaseFetchAnnouncements( &$mysql_connection )
 function obtainLibrusToken( &$curl_handle )
 {
 	$librus_ini = parse_ini_file( 'config/librus.ini' );
-	
-	curl_setopt( $curl_handle, CURLOPT_URL, 'https://api.librus.pl/OAuth/Token' );
+
+	$client_id = 'wmSyUMo8llDAs4y9tJVYY92oyZ6h4lAt7KCuy0Gv';
+
+	curl_setopt( $curl_handle, CURLOPT_COOKIEFILE, '' );
+	curl_setopt( $curl_handle, CURLOPT_FOLLOWLOCATION, 1 );
+	curl_setopt( $curl_handle, CURLOPT_HEADER, 1 );
+
+	curl_setopt( $curl_handle, CURLOPT_URL,
+		'https://portal.librus.pl/oauth2/authorize?' .
+		"client_id={$client_id}&" .
+		'redirect_uri=http://localhost/bar&response_type=code' );
+
+	$portal_login_page = curl_exec( $curl_handle );
+
+	preg_match( "'<meta name=\"csrf-token\" content=\"(.*?)\">'si",
+		$portal_login_page,
+		$csrf );
+
 	curl_setopt( $curl_handle, CURLOPT_POST, 1 );
-	$post_data = "grant_type=password&username={$librus_ini['login']}&password={$librus_ini['password']}&librus_rules_accepted=true&librus_mobile_rules_accepted=true";
-	$content_length = strlen( $post_data );
-	curl_setopt( 
-		$curl_handle, 
-		CURLOPT_POSTFIELDS, 
-		$post_data
-	);
-	curl_setopt( 
-		$curl_handle, 
-		CURLOPT_HTTPHEADER, 
-		array(
-			"Authorization: Basic {$librus_ini['default_token']}",
-			'Content-Type: application/x-www-form-urlencoded',
-			"Content-Length: {$content_length}",
-			'User-Agent: Dalvik/2.1.0 (Linux; U; Android 5.1.1; A0001 Build/LMY48B)',
-			'Host: api.librus.pl',
-			'Connection: Keep-Alive',
-			'Accept-Encoding: gzip',
-		)
-	);
-	
-	$json_raw = curl_exec( $curl_handle );
-	if( $json_raw === FALSE )
-	{
-		errorLog( 'Error obtaining token! Curl error: ' . curl_error( $curl_handle ) );
-		return null;
-	}
-	
-	$response = json_decode( $json_raw );
-	if( isset( $response -> error ) )
-	{
-		errorLog( 'Error obtaining token! Librus API Error: ' . $response -> error );
-		return null;
-	}
-	
+	curl_setopt( $curl_handle, CURLOPT_HTTPHEADER, array(
+		'Content-Type: application/json',
+		"X-CSRF-TOKEN: {$csrf[1]}") );
+	curl_setopt( $curl_handle, CURLOPT_URL, 'https://portal.librus.pl/rodzina/login/action' );
+	curl_setopt( $curl_handle, CURLOPT_POSTFIELDS, json_encode( array(
+		'email' => $librus_ini['login'],
+		'password' => $librus_ini['password']) ) );
+
+	curl_exec( $curl_handle );
+
+	curl_setopt( $curl_handle, CURLOPT_POST, 0 );
+	curl_setopt( $curl_handle, CURLOPT_HTTPHEADER, array() );
+	curl_setopt( $curl_handle, CURLOPT_FOLLOWLOCATION, 0 );
+	curl_setopt( $curl_handle, CURLOPT_URL,
+		'https://portal.librus.pl/oauth2/authorize?' .
+		"client_id={$client_id}&" .
+		'redirect_uri=http://localhost/bar&response_type=code' );
+
+	$oauth_redirect = curl_exec( $curl_handle );
+
+	preg_match( "'code=(.*?)\n'si", $oauth_redirect, $oauth_code );
+
+	curl_setopt( $curl_handle, CURLOPT_POST, 1 );
+	curl_setopt( $curl_handle, CURLOPT_HEADER, 0 );
+	curl_setopt( $curl_handle, CURLOPT_URL, 'https://portal.librus.pl/oauth2/access_token' );
+	curl_setopt( $curl_handle, CURLOPT_POSTFIELDS, array(
+		'grant_type' => 'authorization_code',
+		'code' => $oauth_code[1],
+		'redirect_uri' => 'http://localhost/bar',
+		'client_id' => $client_id) );
+
+	$portal_tokens = curl_exec( $curl_handle );
+
+	$portal_access_token = json_decode( $portal_tokens, true )['access_token'];
+
+	curl_setopt( $curl_handle, CURLOPT_POST, 0 );
+	curl_setopt( $curl_handle, CURLOPT_URL, 'https://portal.librus.pl/api/SynergiaAccounts' );
+	curl_setopt( $curl_handle, CURLOPT_HTTPHEADER, array(
+		"Authorization: Bearer {$portal_access_token}") );
+
+	$synergia_accounts = curl_exec( $curl_handle );
+
+	$synergia_account = json_decode( $synergia_accounts, true )['accounts'][0];
+	$user_token = $synergia_account['accessToken'];
+
 	return [
-		'access_token' 	=> $response -> access_token,
-		'token_type'	=> $response -> token_type,
+		'access_token' 	=> $user_token,
+		'token_type'	=> 'Bearer',
 	];
 }
 
@@ -238,10 +264,6 @@ function fillInTeacherNames( &$curl_handle, $librus_token, $notices_incomplete )
 function librusFetchAnnouncements( $teacher_blacklist )
 {
 	$curl_handle = curl_init();
-
-	//These Aren't the Droids You're Looking For
-	curl_setopt( $curl_handle, CURLOPT_SSL_VERIFYHOST, 0 );
-	curl_setopt( $curl_handle, CURLOPT_SSL_VERIFYPEER, 0 );
 
 	curl_setopt( $curl_handle, CURLOPT_FOLLOWLOCATION, 0 );
 	curl_setopt( $curl_handle, CURLOPT_RETURNTRANSFER, 1 );
